@@ -3,7 +3,7 @@ import SessionModel from "./lib/models/Session.model";
 import UserModel, { type IUser } from "./lib/models/User.model";
 import type { APIContext } from "astro";
 
-const protectedRoutes = ["/dashboard"];
+const protectedRoutes = ["/dashboard/*"];
 
 export type Locals = {
   user?: IUser;
@@ -11,7 +11,7 @@ export type Locals = {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
-  if (protectedRoutes.includes(url.pathname)) {
+  if (new RegExp(protectedRoutes.join("|")).test(url.pathname)) {
     const session = await SessionModel.findOne({
       _id: context.cookies.get("sid")
         ? context.cookies.get("sid")!.value
