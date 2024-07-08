@@ -1,0 +1,7 @@
+---
+import type { Locals } from "../../middleware";
+
+const userId = (Astro.locals as Locals).user?.email;
+---
+
+<div>{userId}</div>

@@ -1,0 +1,70 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Input from "../../components/Input.astro";
+import Button from "../../components/Button.astro";
+
+import UserModel, {
+  comparePassword,
+  type IUser,
+} from "../../lib/models/User.model.ts";
+import { Session } from "../../lib/Session.controller";
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+
+    const existingUser = await UserModel.findOne({ email: data.get("email") });
+    if (!existingUser) {
+      error = "User does not exist";
+    }
+
+    const success = await comparePassword(
+      existingUser?.password as string,
+      data.get("password") as string,
+    );
+
+    if (!success) {
+      error = "Invalid password";
+    }
+
+    const session = await Session.Create(existingUser as IUser);
+    Astro.cookies.set("sid", session._id);
+    return Astro.redirect("/dashboard");
+  } catch (error) {
+    console.error(error);
+  }
+}
+---
+
+<script></script>
+
+<Layout title="Welcome to Astro.">
+  <div class="w-full h-full justify-center items-center flex">
+    <div class="flex flex-col gap-8 p-6 bg-neutral-800 rounded-lg shadow-lg">
+      <div class="flex flex-row gap-4 items-center">
+        <h1 class="text-4xl font-bold">Login</h1>
+        <div class="flex flex-row gap-1 place-self-end">
+          <a>Don't have an account yet?</a>
+          <a href="/register" class="text-blue-500">Register</a>
+        </div>
+      </div>
+      <p class="text-lg">
+        Astro is a new kind of static site builder that delivers lightning-fast
+        performance with a modern developer experience.
+      </p>
+
+      <form class="flex flex-col gap-8" method="POST">
+        <div class="flex flex-col gap-2">
+          <Input name="email" type="email" label="Username" />
+          <Input name="password" type="password" label="Password" />
+        </div>
+        <div class="flex w-full justify-between items-center">
+          <Button> Login </Button>
+          <a class="text-xl" style="color: red;">{error}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>

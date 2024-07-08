@@ -1,0 +1,56 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Input from "../../components/Input.astro";
+import Button from "../../components/Button.astro";
+
+import UserModel from "../../lib/models/User.model.ts";
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+
+    const existingUser = await UserModel.findOne({ email: data.get("email") });
+    if (existingUser) {
+      return new Response("User already exists", { status: 400 });
+    }
+
+    const user = new UserModel({
+      email: data.get("email") as string,
+      password: data.get("password") as string,
+    });
+
+    await user.save();
+
+    Astro.redirect("/login");
+  } catch (error) {
+    console.error(error);
+  }
+}
+---
+
+<script></script>
+
+<Layout title="Welcome to Astro.">
+  <div class="w-full h-full justify-center items-center flex">
+    <div class="flex flex-col gap-8 p-6 bg-neutral-800 rounded-lg shadow-lg">
+      <div class="flex flex-row gap-4 items-center">
+        <h1 class="text-4xl font-bold">Register</h1>
+        <div class="flex flex-row gap-1 place-self-end">
+          <a>Already have an account?</a>
+          <a href="/login" class="text-blue-500">Login</a>
+        </div>
+      </div>
+      <p class="text-lg">
+        Astro is a new kind of static site builder that delivers lightning-fast
+        performance with a modern developer experience.
+      </p>
+      <form class="flex flex-col gap-8" method="POST">
+        <div class="flex flex-col gap-2">
+          <Input name="email" type="email" label="Username" />
+          <Input name="password" type="password" label="Password" />
+        </div>
+        <Button> Register </Button>
+      </form>
+    </div>
+  </div>
+</Layout>
