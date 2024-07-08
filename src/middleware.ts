@@ -1,9 +1,11 @@
 import { defineMiddleware } from "astro:middleware";
-import SessionModel from "./lib/models/Session.model";
+import SessionModel, { type ISession } from "./lib/models/Session.model";
 import UserModel, { type IUser } from "./lib/models/User.model";
 import type { APIContext } from "astro";
+import { Session } from "./lib/Session.controller";
 
 const protectedRoutes = ["/dashboard/*"];
+const dontAllowWhenLoggedIn = ["/login", "/register"];
 
 export type Locals = {
   user?: IUser;
@@ -11,30 +13,30 @@ export type Locals = {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
+  const sid = context.cookies.get("sid")?.value;
+
+  if (new RegExp(dontAllowWhenLoggedIn.join("|")).test(url.pathname)) {
+    const CurrentUser = await Session.CurrentUser(sid);
+
+    if (CurrentUser) {
+      return context.redirect("/dashboard");
+    }
+  }
+
   if (new RegExp(protectedRoutes.join("|")).test(url.pathname)) {
-    const session = await SessionModel.findOne({
-      _id: context.cookies.get("sid")
-        ? context.cookies.get("sid")!.value
-        : null,
-    }).catch(() => {
-      return null;
-    });
+    const session = await Session.Get(sid).catch(() => null);
+
     if (!session) {
       return context.redirect("/login");
     }
 
-    const sessionExpired = new Date(session.expiresAt) < new Date();
-    if (sessionExpired) {
-      await SessionModel.deleteOne({ _id: session._id });
-      return context.redirect("/login");
-    }
+    const auth = await Session.Auth(session._id)
+      .catch(() => {
+        return context.redirect("/login");
+      })
+      .then((auth) => auth as { User: IUser; Session: ISession });
 
-    const user = await UserModel.findOne({ _id: session.user });
-    if (!user) {
-      return context.redirect("/login");
-    }
-
-    (context.locals as Locals).user = user;
+    (context.locals as Locals).user = auth.User;
   }
 
   return next();

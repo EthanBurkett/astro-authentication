@@ -2,28 +2,62 @@
 import Layout from "../../layouts/Layout.astro";
 import Input from "../../components/Input.astro";
 import Button from "../../components/Button.astro";
-
 import UserModel from "../../lib/models/User.model.ts";
+
+import { z } from "zod";
+
+let error: string | undefined;
 
 if (Astro.request.method === "POST") {
   try {
     const data = await Astro.request.formData();
 
-    const existingUser = await UserModel.findOne({ email: data.get("email") });
-    if (existingUser) {
-      return new Response("User already exists", { status: 400 });
-    }
-
-    const user = new UserModel({
-      email: data.get("email") as string,
-      password: data.get("password") as string,
+    const schema = z.object({
+      email: z
+        .string({
+          message: "Invalid email address",
+          invalid_type_error: "Invalid email address",
+          required_error: "Email is required",
+        })
+        .email(),
+      password: z
+        .string({
+          message: "Password must be at least 6 characters",
+          invalid_type_error: "Password must be a string",
+          required_error: "Password is required",
+        })
+        .min(6, {
+          message: "Password must be at least 6 characters",
+        }),
     });
 
-    await user.save();
+    const parse = schema.safeParse({
+      email: data.get("email"),
+      password: data.get("password"),
+    });
 
-    Astro.redirect("/login");
+    if (parse.error) {
+      error = parse.error.errors[0].message;
+    }
+
+    const existingUser = await UserModel.findOne({ email: data.get("email") });
+    if (existingUser) {
+      error = "User with that email already exists";
+    }
+
+    if (!error) {
+      const user = new UserModel({
+        email: data.get("email") as string,
+        password: data.get("password") as string,
+      });
+
+      await user.save();
+
+      return Astro.redirect("/login");
+    }
   } catch (error) {
     console.error(error);
+    error = "An error occurred";
   }
 }
 ---
@@ -37,7 +71,10 @@ if (Astro.request.method === "POST") {
         <h1 class="text-4xl font-bold">Register</h1>
         <div class="flex flex-row gap-1 place-self-end">
           <a>Already have an account?</a>
-          <a href="/login" class="text-blue-500">Login</a>
+          <a
+            href="/login"
+            class="text-blue-500 transition-all hover:text-blue-400">Login</a
+          >
         </div>
       </div>
       <p class="text-lg">
@@ -49,7 +86,10 @@ if (Astro.request.method === "POST") {
           <Input name="email" type="email" label="Username" />
           <Input name="password" type="password" label="Password" />
         </div>
-        <Button> Register </Button>
+        <div class="flex w-full justify-between items-center">
+          <Button> Register </Button>
+          <a class="text-lg text-red-400">{error}</a>
+        </div>
       </form>
     </div>
   </div>

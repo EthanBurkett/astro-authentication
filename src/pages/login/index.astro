@@ -47,7 +47,10 @@ if (Astro.request.method === "POST") {
         <h1 class="text-4xl font-bold">Login</h1>
         <div class="flex flex-row gap-1 place-self-end">
           <a>Don't have an account yet?</a>
-          <a href="/register" class="text-blue-500">Register</a>
+          <a
+            href="/register"
+            class="text-blue-500 transition-all hover:text-blue-400">Register</a
+          >
         </div>
       </div>
       <p class="text-lg">
@@ -62,7 +65,7 @@ if (Astro.request.method === "POST") {
         </div>
         <div class="flex w-full justify-between items-center">
           <Button> Login </Button>
-          <a class="text-xl" style="color: red;">{error}</a>
+          <a class="text-lg text-red-400">{error}</a>
         </div>
       </form>
     </div>

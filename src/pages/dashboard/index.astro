@@ -1,7 +1,10 @@
 ---
 import type { Locals } from "../../middleware";
 
-const userId = (Astro.locals as Locals).user?.email;
+const user = (Astro.locals as Locals).user;
+if (!user) return Astro.redirect("/login");
+
+const userId = user._id;
 ---
 
 <div>{userId}</div>
