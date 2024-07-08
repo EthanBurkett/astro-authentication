@@ -5,6 +5,7 @@ import Button from "../../components/Button.astro";
 import UserModel from "../../lib/models/User.model.ts";
 
 import { z } from "zod";
+import { Session } from "../../lib/Session.controller";
 
 let error: string | undefined;
 
@@ -53,7 +54,10 @@ if (Astro.request.method === "POST") {
 
       await user.save();
 
-      return Astro.redirect("/login");
+      const session = await Session.Create(user);
+      Astro.cookies.set("sid", session._id);
+
+      return Astro.redirect("/dashboard");
     }
   } catch (error) {
     console.error(error);

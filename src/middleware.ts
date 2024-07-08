@@ -2,7 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import SessionModel, { type ISession } from "./lib/models/Session.model";
 import UserModel, { type IUser } from "./lib/models/User.model";
 import type { APIContext } from "astro";
-import { Session } from "./lib/Session.controller";
+import { Session, SessionError } from "./lib/Session.controller";
 
 const protectedRoutes = ["/dashboard/*"];
 const dontAllowWhenLoggedIn = ["/login", "/register"];
@@ -21,6 +21,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (CurrentUser) {
       return context.redirect("/dashboard");
     }
+
+    return next();
   }
 
   if (new RegExp(protectedRoutes.join("|")).test(url.pathname)) {
@@ -34,7 +36,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
       .catch(() => {
         return context.redirect("/login");
       })
-      .then((auth) => auth as { User: IUser; Session: ISession });
+      .then(
+        (auth) =>
+          auth as {
+            User: IUser;
+            Session: ISession;
+            success: boolean;
+            message?: string;
+          },
+      );
+
+    if (!auth.success) {
+      switch (auth.message) {
+        case SessionError.USER_NOT_FOUND:
+          await Session.Delete(session._id);
+          return context.redirect("/login");
+        default:
+          return context.redirect("/login");
+      }
+    }
 
     (context.locals as Locals).user = auth.User;
   }

@@ -1,0 +1,11 @@
+---
+import { Session } from "../../lib/Session.controller";
+
+const sid = Astro.cookies.get("sid")?.value;
+if (!sid) return Astro.redirect("/login");
+
+Astro.cookies.set("sid", "", { expires: new Date(0) });
+await Session.Delete(sid);
+
+return Astro.redirect("/login");
+---
