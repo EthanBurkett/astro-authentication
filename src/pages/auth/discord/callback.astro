@@ -1,0 +1,64 @@
+---
+import type { IDiscordUser } from "../../../lib/models/DiscordUser.model";
+import UserModel, { type IUser } from "../../../lib/models/User.model";
+import DiscordOAuth from "../../../lib/oauth/discord";
+import { Session } from "../../../lib/Session.controller";
+
+import Layout from "../../../layouts/Layout.astro";
+
+if (Astro.request.method == "GET") {
+  const params = new URL(Astro.request.url).searchParams;
+  const code = params.get("code");
+  const state = params.get("state");
+  const storedState = Astro.cookies.get("oauth_discord_state")?.value;
+
+  if (state !== storedState) {
+    Astro.cookies.delete("oauth_discord_state");
+    Astro.cookies.delete("oauth_discord_verifier");
+    return new Response("Invalid state", { status: 400 });
+  }
+
+  const { access_token } = await DiscordOAuth.getTokens(
+    code as string,
+    storedState as string,
+  );
+
+  if (!access_token) {
+    return new Response("Invalid access token", { status: 400 });
+  }
+
+  const user: IDiscordUser & { id: string } = (await DiscordOAuth.getUser(
+    access_token,
+  )) as any;
+
+  const sessionUser = await Session.CreateProviderUser<"discord">(
+    "discord",
+    user,
+  );
+
+  Astro.cookies.delete("oauth_discord_state");
+  Astro.cookies.delete("oauth_discord_verifier");
+
+  const session = await Session.Create(sessionUser as IUser);
+  const cookieExists = Astro.cookies.get("sid")?.value;
+  if (cookieExists) {
+    Astro.cookies.delete("sid");
+  }
+
+  try {
+    Astro.response.headers.set("Set-Cookie", `sid=${session._id}; Path=/`);
+    Astro.cookies.set("sid", session._id.toString());
+  } catch (e: any) {
+    return new Response(JSON.stringify(e), { status: 500 });
+  }
+  // return Astro.redirect("/dashboard");
+} else {
+  return new Response("Method not allowed", { status: 405 });
+}
+---
+
+<script>
+  location.href = "/dashboard";
+</script>
+
+<Layout title="Discord Authentication"> <h1>Authenticating...</h1> </Layout>

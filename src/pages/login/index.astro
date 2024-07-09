@@ -9,7 +9,7 @@ import UserModel, {
 } from "../../lib/models/User.model.ts";
 import { Session } from "../../lib/Session.controller";
 
-let error = "";
+let error;
 
 if (Astro.request.method === "POST") {
   try {
@@ -18,6 +18,11 @@ if (Astro.request.method === "POST") {
     const existingUser = await UserModel.findOne({ email: data.get("email") });
     if (!existingUser) {
       error = "User does not exist";
+    }
+
+    const connectedProviders = existingUser?.connectedProviders;
+    if (connectedProviders?.Discord) {
+      error = "User is connected with Discord";
     }
 
     const success = await comparePassword(
@@ -29,9 +34,11 @@ if (Astro.request.method === "POST") {
       error = "Invalid password";
     }
 
-    const session = await Session.Create(existingUser as IUser);
-    Astro.cookies.set("sid", session._id);
-    return Astro.redirect("/dashboard");
+    if (!error) {
+      const session = await Session.Create(existingUser as IUser);
+      Astro.cookies.set("sid", session._id);
+      return Astro.redirect("/dashboard");
+    }
   } catch (error) {
     console.error(error);
   }

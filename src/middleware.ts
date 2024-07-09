@@ -29,11 +29,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const session = await Session.Get(sid).catch(() => null);
 
     if (!session) {
+      console.log("No session found");
       return context.redirect("/login");
     }
 
     const auth = await Session.Auth(session._id)
       .catch(() => {
+        console.log("Error authenticating session");
         return context.redirect("/login");
       })
       .then(
@@ -42,7 +44,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
             User: IUser;
             Session: ISession;
             success: boolean;
-            message?: string;
+            message?: SessionError;
           },
       );
 
