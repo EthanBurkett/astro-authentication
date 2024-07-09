@@ -2,6 +2,8 @@ import type { IUser } from "./models/User.model";
 import SessionModel, { type ISession } from "./models/Session.model";
 import dayjs from "dayjs";
 import UserModel from "./models/User.model";
+import type { IDiscordUser } from "./models/DiscordUser.model";
+import DiscordUserModel from "./models/DiscordUser.model";
 
 export enum SessionError {
   SESSION_NOT_FOUND = "Session not found",
@@ -11,6 +13,15 @@ export enum SessionError {
 
 export const Session = {
   Create: async (user: IUser): Promise<ISession> => {
+    const exists = await SessionModel.findOne({ user: user._id });
+    if (exists) {
+      if (exists.expiresAt < new Date()) {
+        await SessionModel.deleteOne({ _id: exists._id });
+      } else {
+        return exists;
+      }
+    }
+
     const expiresAt = dayjs().add(1, "day").toDate();
     const session = new SessionModel({ user, expiresAt });
     await session.save();
@@ -63,5 +74,55 @@ export const Session = {
       .then((auth) => ((auth?.User as IUser | null) ? auth : null));
     if (!auth) return null;
     return auth.User ? auth.User : null;
+  },
+
+  CreateProviderUser: async <T extends "discord" = "discord">(
+    provider: T,
+    user: T extends "discord" ? IDiscordUser & { id: string } : {},
+  ) => {
+    if (provider === "discord") {
+      const exists = await DiscordUserModel.findOne({ _id: user.id });
+      if (exists) {
+        await DiscordUserModel.findOneAndUpdate(
+          { _id: user.id },
+          {
+            username: user.username,
+            email: user.email,
+            avatar: user.avatar,
+            _id: user.id,
+            linkedUser: exists.linkedUser,
+          },
+          { upsert: true },
+        );
+
+        return await UserModel.findOne({ _id: exists.linkedUser });
+      }
+      const userExists = await UserModel.findOne({ email: user.email });
+      let newUser;
+      if (userExists) newUser = userExists;
+      else
+        newUser = new UserModel({
+          email: user.email,
+        });
+      const newDiscordUser = new DiscordUserModel({
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar,
+        linkedUser: newUser._id,
+      });
+
+      newDiscordUser._id = user.id;
+
+      console.log({ newUser, newDiscordUser });
+
+      newUser.connectedProviders = {
+        Discord: newDiscordUser._id,
+      };
+
+      await newDiscordUser.save();
+      await newUser.save();
+
+      return newUser;
+    }
   },
 };
