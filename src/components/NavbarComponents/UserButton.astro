@@ -1,0 +1,80 @@
+---
+import { LogOut, Settings, User } from "react-feather";
+import type { IUser } from "../../lib/models/User.model";
+
+interface Props {
+  userString: string;
+}
+
+const { userString } = Astro.props;
+const user: IUser = JSON.parse(userString);
+---
+
+<script>
+  let open = false;
+  const button = document.getElementById("userButton");
+  const dropdown = document.getElementById("userDropdown");
+
+  const links = document.querySelectorAll("#link");
+
+  links.forEach((link: any) => {
+    const to = link.getAttribute("data-to");
+    if (!to)
+      throw new Error('div with #link ID is missing the "data-to" attribute');
+
+    link.addEventListener("click", () => {
+      location.href = to;
+    });
+  });
+
+  button?.addEventListener("click", () => {
+    if (!dropdown) return;
+    if (open) {
+      dropdown.style.display = "none";
+      open = false;
+    } else if (!open) {
+      dropdown.style.display = "block";
+      open = true;
+    }
+  });
+</script>
+<div class="w-12 h-12 flex justify-end">
+  <div
+    id="userButton"
+    class="cursor-pointer bg-gradient-to-tr from-brand-200 to-blue-400 flex items-center justify-center rounded-full transition-all hover:shadow-lg ring-2 ring-transparent hover:ring-brand-200"
+  >
+    {
+      user.imageUri && (
+        <img src={user.imageUri} class="w-12 h-12 rounded-full" />
+      )
+    }
+    {!user.imageUri && <User size={32} />}
+  </div>
+  <div
+    id="userDropdown"
+    class="absolute mt-14 rounded-lg bg-neutral-800 shadow-lg flex flex-col gap-4"
+    style="display: none;"
+  >
+    <h1 class="px-4 font-bold text-base py-2 flex items-center justify-center">
+      {user.email}
+    </h1>
+    <div class="flex flex-col gap-0">
+      <div
+        id="link"
+        data-to="/settings"
+        class="rounded-lg flex flex-row gap-4 px-4 py-4 items-center text-neutral-400 cursor-pointer transition-all hover:text-white hover:bg-neutral-700 [&>svg]:transition-[transform] [&>svg]:duration-500 [&>svg]:hover:rotate-[170deg]"
+      >
+        <Settings />
+        <a class="font-semibold">Settings</a>
+      </div>
+      <div
+        id="link"
+        data-to="/logout"
+        class="rounded-lg flex flex-row gap-4 px-4 py-4 items-center text-neutral-400 cursor-pointer transition-all hover:text-white hover:bg-neutral-700"
+      >
+        <LogOut />
+        <a class="font-semibold">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>
