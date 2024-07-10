@@ -25,38 +25,35 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
+  const session = await Session.Get(sid).catch(() => null);
+  if (!session) return next();
+
+  const auth = await Session.Auth(session._id)
+    .catch(() => null)
+    .then(
+      (auth) =>
+        auth as {
+          User: IUser;
+          Session: ISession;
+          success: boolean;
+          message?: string;
+        },
+    );
+  if (!auth.success || !auth.User || !auth.Session) return next();
+
+  if (!auth.success) {
+    switch (auth.message) {
+      case SessionError.USER_NOT_FOUND:
+        await Session.Delete(session._id);
+    }
+  }
+
+  (context.locals as Locals).user = auth.User;
+
   if (new RegExp(protectedRoutes.join("|")).test(url.pathname)) {
-    const session = await Session.Get(sid).catch(() => null);
-
-    if (!session) {
-      console.log("No session found");
+    if (!session) return context.redirect("/login");
+    if (!auth.success || !auth.User || !auth.Session)
       return context.redirect("/login");
-    }
-
-    const auth = await Session.Auth(session._id)
-      .catch(() => {
-        console.log("Error authenticating session");
-        return context.redirect("/login");
-      })
-      .then(
-        (auth) =>
-          auth as {
-            User: IUser;
-            Session: ISession;
-            success: boolean;
-            message?: SessionError;
-          },
-      );
-
-    if (!auth.success) {
-      switch (auth.message) {
-        case SessionError.USER_NOT_FOUND:
-          await Session.Delete(session._id);
-          return context.redirect("/login");
-        default:
-          return context.redirect("/login");
-      }
-    }
 
     (context.locals as Locals).user = auth.User;
   }
