@@ -1,0 +1,18 @@
+---
+import uuid from "uniqid";
+import DiscordOAuth from "../../../lib/oauth/discord";
+
+if (Astro.request.method == "GET") {
+  const verifier = uuid();
+  const state = uuid();
+
+  Astro.cookies.set("oauth_discord_state", state);
+  Astro.cookies.set("oauth_discord_verifier", verifier);
+
+  const url = DiscordOAuth.generateOAuthURL(state, verifier);
+
+  return Astro.redirect(url.toString());
+} else {
+  return new Response("Method not allowed", { status: 405 });
+}
+---

@@ -3,11 +3,12 @@ const { Schema, Document, models, model, Model } = mongoose;
 const SALT_WORK_FACTOR = 10;
 import bcrypt from "bcryptjs";
 import type { ISession } from "./Session.model";
+import type { IDiscordUser } from "./DiscordUser.model";
 
 export interface IUser extends Document {
   _id: ObjectId;
   email: string;
-  password: string;
+  password?: string;
   createdAt?: Date;
   updatedAt?: Date;
   imageUri?: string;
@@ -38,6 +39,7 @@ UserSchema.pre<IUser>("save", function (next) {
   bcrypt.genSalt(SALT_WORK_FACTOR, function (err, salt) {
     if (err) return next(err);
 
+    if (!user.password) return next();
     bcrypt.hash(user.password, salt, function (err, hash) {
       if (err) return next(err);
 
