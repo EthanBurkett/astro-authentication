@@ -10,12 +10,23 @@ export interface IUser extends Document {
   password: string;
   createdAt?: Date;
   updatedAt?: Date;
+  imageUri?: string;
+  connectedProviders?: {
+    Discord: string;
+  };
 }
 
 const UserSchema = new Schema(
   {
     email: { type: String, required: true },
     password: { type: String, required: true },
+    imageUri: { type: String },
+    connectedProviders: {
+      Discord: {
+        type: String,
+        ref: "DiscordUser",
+      },
+    },
   },
   { timestamps: true },
 );

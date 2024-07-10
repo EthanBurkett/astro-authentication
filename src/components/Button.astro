@@ -1,6 +1,6 @@
 ---
-import { twMerge } from 'tailwind-merge';
-import { clsx } from 'clsx'
+import { twMerge } from "tailwind-merge";
+import { clsx } from "clsx";
 
 interface Props {
   className?: string;
@@ -9,7 +9,14 @@ interface Props {
 const { className } = Astro.props;
 ---
 
-<button class={twMerge(clsx('button-gradient px-4 py-2 font-bold rounded-lg text-lg flex justify-center items-center w-[100px] cursor-pointer ', className))}>
+<button
+  class={twMerge(
+    clsx(
+      "button-gradient px-4 py-2 font-bold rounded-lg text-lg flex justify-center items-center w-auto cursor-pointer ",
+      className,
+    ),
+  )}
+>
   <slot />
 </button>
 

@@ -1,0 +1,24 @@
+---
+import { Session } from "../lib/Session.controller";
+import type { Locals } from "../middleware";
+import NavbarLink from "./NavbarLink.astro";
+import { User } from "react-feather";
+import UserButton from "./NavbarComponents/UserButton.astro";
+
+const user = (Astro.locals as Locals).user;
+---
+
+<div class="p-6 flex justify-between">
+  <a href="/" class="text-2xl font-bold">Astro</a>
+  <div class="flex flex-row-reverse gap-6 items-center">
+    {
+      !user && (
+        <NavbarLink variant="button" href="/login">
+          Login
+        </NavbarLink>
+      )
+    }
+    {user && <UserButton userString={JSON.stringify(user)} />}
+    <NavbarLink href="/dashboard">Dashboard</NavbarLink>
+  </div>
+</div>

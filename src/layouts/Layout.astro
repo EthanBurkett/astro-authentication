@@ -1,5 +1,6 @@
 ---
-import DatabaseWrapper from './DatabaseWrapper.astro';
+import Navbar from "../components/Navbar.astro";
+import DatabaseWrapper from "./DatabaseWrapper.astro";
 
 interface Props {
   title: string;
@@ -22,7 +23,8 @@ const { title } = Astro.props;
     class="w-screen h-screen bg-neutral-900 overflow-hidden flex justify-center"
   >
     <DatabaseWrapper>
-      <div class="max-w-[1920px] w-full h-full flex flex-column text-white">
+      <div class="max-w-[1920px] w-full h-full flex flex-col text-white">
+        <Navbar />
         <slot />
       </div>
     </DatabaseWrapper>
