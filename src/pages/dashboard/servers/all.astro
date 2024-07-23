@@ -1,0 +1,93 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import { cn } from "../../../lib/utils";
+import type { Locals } from "../../../middleware";
+import type { IServerData } from "../../../lib/utils";
+const servers = (Astro.locals as Locals).servers;
+---
+
+<script>
+  const cards = document.querySelectorAll("#server-card");
+  cards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const key = card.getAttribute("data-key");
+      window.location.href = `/dashboard/servers/${key}`;
+    });
+  });
+</script>
+
+<Layout title="All Servers">
+  <div slot="content" class="p-16 w-full h-full flex flex-col gap-4">
+    <h1 class="text-3xl font-bold">All Servers</h1>
+    <div class="flex flex-row">
+      {
+        servers?.map(async (server) => {
+          let icon = "";
+          const res = await fetch(
+            `https://us.mc-api.net/v3/server/favicon/${server.address}:${server.port}`,
+          );
+          const serverData = await fetch(
+            `http://${server.address}:${server.plugin_port}/minti`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${server.plugin_api_key}`,
+              },
+            },
+          )
+            .catch(() => null)
+            .then(async (d) => {
+              try {
+                const data = await d?.json();
+                if (!data.server) return null;
+                return data?.server as IServerData;
+              } catch (e) {
+                return null;
+              }
+            });
+          if (!res || res.status != 200) icon = "/default-server.png";
+          else
+            icon = `https://us.mc-api.net/v3/server/favicon/${server.address}:${server.port}`;
+
+          return (
+            <div data-key={server._id} id="server-card" class="relative flex flex-row gap-4 p-4 bg-white hover:bg-white/70 dark:hover:bg-neutral-800/70 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg dark:bg-neutral-800 rounded-lg shadow-lg">
+              <img
+                src={icon}
+                alt="Server Icon"
+                class="w-24 h-24 aspect-square rounded-lg"
+              />
+              <div class="flex flex-col gap-0 pb-4">
+                <h1 class="text-xl font-bold">{server.display_name}</h1>
+                <span class="text-lg text-black dark:text-white">
+                  {server.address}:{serverData?.port || server.port}
+                </span>
+                <span title={serverData?.name || server.name} class="text-sm text-black/70 dark:text-white/70 truncate max-w-[200px]">
+                  <a class="text-black dark:text-white">Name: </a>{serverData?.name || server.name}
+                </span>
+                {serverData && (
+                  <span title={serverData.version} class="text-sm text-black/70 dark:text-white/70 truncate max-w-[200px]">
+                    <a class="text-black dark:text-white">Version: </a>{serverData.version}
+                  </span>
+                  <span class="text-sm text-black/70 dark:text-white/70">
+                    {serverData.onlinePlayers}/{serverData.maxPlayers} players
+                  </span>
+                )}
+              </div>
+              <div class="flex flex-row-reverse gap-2 absolute bottom-2 right-2 items-center justify-center">
+                <span class="text-sm text-black/60 dark:text-white/60">
+                  {serverData ? "Online" : "Offline"}
+                </span>
+                <div
+                  class={cn(
+                    "w-2 h-2 rounded-full flex items-center justify-center",
+                    serverData ? "bg-green-400" : "bg-red-400",
+                  )}
+                />
+              </div>
+            </div>
+          );
+        })
+      }
+    </div>
+  </div>
+</Layout>

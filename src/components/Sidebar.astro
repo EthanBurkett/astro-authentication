@@ -1,0 +1,198 @@
+---
+import { FaCreditCard, FaDiscord, FaList } from "react-icons/fa";
+import { Session } from "../lib/Session.controller";
+import type { Locals } from "../middleware";
+import Icon from "./Icon.astro";
+import UserButton from "./UserButton.astro";
+import { IoCalendar } from "react-icons/io5";
+import { FaFileInvoiceDollar } from "react-icons/fa";
+import { cn } from "../lib/utils";
+import type { ClassValue } from "clsx";
+import ServerSelect from "./Sidebar.ServerSelect.tsx";
+import SidebarItem from "./Sidebar.Item.tsx";
+import { FaBasketShopping } from "react-icons/fa6";
+import { AiFillProduct } from "react-icons/ai";
+import { IoMdAddCircle } from "react-icons/io";
+import { FaServer } from "react-icons/fa";
+import type { IServer } from "../lib/models/Server.model";
+
+const user = (Astro.locals as Locals).user;
+
+const sessionId = Astro.cookies.get("sid")?.value;
+const discordUser = await Session.DiscordUser(sessionId);
+
+if (!user) return Astro.redirect("/login");
+
+export type Link = {
+  name: string;
+  to: string;
+  icon: any;
+  iconString: string;
+  children?: Link[];
+  className?: ClassValue;
+  excludeId?: boolean;
+  global?: boolean;
+};
+
+const Links: (serverId: string) => Link[] = (serverId) => [
+  {
+    name: "Servers",
+    to: "/servers",
+    icon: FaServer,
+    iconString: JSON.stringify(FaServer({})),
+    global: true,
+    excludeId: true, // Make urls redirect to /dashboard/... instead of /dashboard/servers/:id/...
+    children: [
+      {
+        name: "All Servers",
+        icon: FaList,
+        iconString: JSON.stringify(FaList({})),
+        to: "/servers/all",
+      },
+      {
+        name: "Create Server",
+        icon: IoMdAddCircle,
+        iconString: JSON.stringify(IoMdAddCircle({})),
+        to: "/servers/create",
+      },
+    ],
+  },
+  {
+    name: "Payments",
+    to: "/payments",
+    icon: FaCreditCard,
+    iconString: JSON.stringify(FaCreditCard({})),
+    className:
+      "[&>svg]:transition-[transform] [&>svg]:duration-300 [&>svg]:hover:rotate-[15deg] [&>svg]:hover:scale-110",
+    children: [
+      {
+        icon: IoCalendar,
+        iconString: JSON.stringify(IoCalendar({})),
+        name: "Subscriptions",
+        to: "/payments/subscriptions",
+      },
+      {
+        icon: FaFileInvoiceDollar,
+        iconString: JSON.stringify(FaFileInvoiceDollar({})),
+        name: "Invoices",
+        to: "/payments/invoices",
+      },
+    ],
+  },
+  {
+    name: "Products",
+    to: "/products",
+    icon: FaBasketShopping,
+    iconString: JSON.stringify(FaBasketShopping({})),
+    children: [
+      {
+        name: "All Products",
+        icon: AiFillProduct,
+        iconString: JSON.stringify(AiFillProduct({})),
+        to: "/products/all",
+      },
+      {
+        name: "Create Product",
+        icon: IoMdAddCircle,
+        iconString: JSON.stringify(IoMdAddCircle({})),
+        to: "/products/create",
+      },
+    ],
+  },
+];
+
+const pathname = Astro.url.pathname;
+const servers = (Astro.locals as Locals).servers;
+
+const dashboardIndex = pathname.split("/").indexOf("dashboard");
+const serverId: string = pathname.split("/")[dashboardIndex + 2] || "global";
+const isGlobal = serverId === "global" || serverId === "all";
+---
+
+<div
+  class="max-w-[200px] dark:bg-dark-900 bg-light-100 h-full w-full flex flex-col"
+>
+  <div class="h-full flex justify-between flex-col">
+    <div class="flex flex-col">
+      <div class="p-4">
+        <Icon
+          href="/dashboard"
+          iconSize={48}
+          fontSize="lg"
+          text="Minti Portal"
+        />
+      </div>
+      <div class="w-full h-[2px] dark:bg-dark-700 bg-neutral-100"></div>
+      <div class="w-full p-4 flex flex-row gap-2">
+        <ServerSelect
+          pathname={pathname}
+          serversString={JSON.stringify(servers)}
+          client:load
+        />
+        <a
+          href="/dashboard/servers/all"
+          title="View all servers"
+          class="p-4 font-bold dark:text-white bg-neutral-100 dark:bg-dark-800 rounded-lg flex items-center justify-center cursor-pointer transition-all hover:bg-light-300 dark:hover:bg-dark-700"
+        >
+          <FaList />
+        </a>
+      </div>
+      <div class="p-4 flex flex-col gap-2">
+        {
+          Links(serverId).map((link) => {
+            if (!link) return null;
+            const {
+              icon: Icon,
+              name,
+              to,
+              children,
+              className,
+              excludeId,
+            } = link;
+            if (!name || !to) return null;
+            if (!link.global && isGlobal) return null;
+            if (!children)
+              return (
+                <a
+                  href={
+                    excludeId
+                      ? `/dashboard${to}`
+                      : `/dashboard/servers/${serverId}${to}`
+                  }
+                  class={cn(
+                    "flex flex-row gap-4 items-center py-2 px-4 dark:bg-dark-800 bg-neutral-100 rounded-lg text-black/70 hover:text-black dark:text-white/60 transition-all dark:hover:text-white cursor-pointer font-medium",
+                    className,
+                  )}
+                >
+                  <Icon />
+                  {link.name}
+                </a>
+              );
+            else
+              return (
+                <SidebarItem
+                  serverId={serverId}
+                  itemString={JSON.stringify(link)}
+                  client:load
+                />
+              );
+          })
+        }
+      </div>
+    </div>
+    <div class="p-2">
+      <div
+        class="p-2 flex flex-row gap-4 items-center dark:text-white font-bold rounded-xl dark:bg-dark-800 bg-neutral-100 text-black w-full"
+      >
+        <div class="min-w-10 min-h-10">
+          <UserButton />
+        </div>
+        <p title={user?.email} class="max-w-[100px] truncate">
+          {discordUser && discordUser.username}
+          {!discordUser && !user.username && user?.email}
+          {!discordUser && user.username}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

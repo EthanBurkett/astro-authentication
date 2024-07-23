@@ -8,6 +8,7 @@ import type { IDiscordUser } from "./DiscordUser.model";
 export interface IUser extends Document {
   _id: ObjectId;
   email: string;
+  username?: string;
   password?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -20,8 +21,9 @@ export interface IUser extends Document {
 const UserSchema = new Schema(
   {
     email: { type: String, required: true },
-    password: { type: String, required: true },
+    password: { type: String, required: false },
     imageUri: { type: String },
+    username: { type: String },
     connectedProviders: {
       Discord: {
         type: String,

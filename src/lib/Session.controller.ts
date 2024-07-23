@@ -75,7 +75,20 @@ export const Session = {
     if (!auth) return null;
     return auth.User ? auth.User : null;
   },
+  DiscordUser: async (sessionId?: string): Promise<IDiscordUser | null> => {
+    const user = await Session.CurrentUser(sessionId);
+    if (!user) return null;
+    if (!user.connectedProviders || !user.connectedProviders.Discord)
+      return null;
 
+    const discordId = user.connectedProviders.Discord;
+    const sessionDiscordUser = await DiscordUserModel.findOne({
+      _id: discordId,
+    });
+    if (!sessionDiscordUser) return null;
+
+    return sessionDiscordUser;
+  },
   CreateProviderUser: async <T extends "discord" = "discord">(
     provider: T,
     user: T extends "discord" ? IDiscordUser & { id: string } : {},
@@ -95,7 +108,23 @@ export const Session = {
           { upsert: true },
         );
 
-        return await UserModel.findOne({ _id: exists.linkedUser });
+        const userModel = await UserModel.findOneAndUpdate(
+          { _id: exists.linkedUser },
+          {
+            email: exists.email,
+            _id: exists.linkedUser,
+            username: exists.username,
+            connectedProviders: {
+              Discord: exists._id,
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        );
+
+        return userModel;
       }
       const userExists = await UserModel.findOne({ email: user.email });
       let newUser;
@@ -113,11 +142,10 @@ export const Session = {
 
       newDiscordUser._id = user.id;
 
-      console.log({ newUser, newDiscordUser });
-
       newUser.connectedProviders = {
         Discord: newDiscordUser._id,
       };
+      newUser.username = newDiscordUser.username;
 
       await newDiscordUser.save();
       await newUser.save();

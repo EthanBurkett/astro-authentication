@@ -2,23 +2,56 @@
 import { Session } from "../lib/Session.controller";
 import type { Locals } from "../middleware";
 import NavbarLink from "./NavbarLink.astro";
-import { User } from "react-feather";
-import UserButton from "./NavbarComponents/UserButton.astro";
+import { LogIn, User } from "react-feather";
+import UserButton from "./UserButton.astro";
+import { MdSunny } from "react-icons/md";
+import { FaMoon } from "react-icons/fa";
+import { AiFillAliwangwang } from "react-icons/ai";
+import Icon from "./Icon.astro";
 
 const user = (Astro.locals as Locals).user;
+
+const isDarkMode = Astro.cookies.get("dark")?.value === "true";
 ---
 
-<div class="p-6 flex justify-between">
-  <a href="/" class="text-2xl font-bold">Astro</a>
-  <div class="flex flex-row-reverse gap-6 items-center">
-    {
-      !user && (
-        <NavbarLink variant="button" href="/login">
-          Login
-        </NavbarLink>
-      )
+<script>
+  const themeChanger = document.getElementById("themeChanger");
+  themeChanger?.addEventListener("click", () => {
+    if (document.documentElement.classList.contains("dark")) {
+      document.documentElement.classList.remove("dark");
+      document.cookie = "dark=false";
+    } else {
+      document.documentElement.classList.add("dark");
+      document.cookie = "dark=true";
     }
-    {user && <UserButton userString={JSON.stringify(user)} />}
+    location.reload();
+  });
+</script>
+
+<div class="p-6 flex justify-between max-w-[1920px] w-full place-self-center">
+  <Icon />
+  <div class="flex flex-row-reverse gap-6 items-center">
+    <div class="flex flex-row-reverse items-center gap-2">
+      <div
+        id="themeChanger"
+        class="from-brand-200 to-blue-400 bg-gradient-to-tr transition-all bg-grad-size hover:bg-grad-pos-end px-2 py-2 text-white rounded-xl cursor-pointer"
+      >
+        {isDarkMode ? <MdSunny size={16} /> : <FaMoon size={16} />}
+      </div>
+      {
+        !user && (
+          <NavbarLink
+            variant="button"
+            href="/login"
+            className="flex flex-row gap-2"
+          >
+            <LogIn />
+            Sign In
+          </NavbarLink>
+        )
+      }
+      {user && <UserButton />}
+    </div>
     <NavbarLink href="/dashboard">Dashboard</NavbarLink>
   </div>
 </div>

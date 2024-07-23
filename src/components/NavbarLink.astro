@@ -1,25 +1,36 @@
 ---
+import { cn } from "../lib/utils";
 import Button from "./Button.astro";
 
 interface Props {
   href: string;
   variant?: "link" | "button";
+  className?: string;
 }
 
-const { href, variant = "link" } = Astro.props;
+const { href, variant = "link", className } = Astro.props;
 ---
 
 {
   variant === "link" ? (
     <a
       href={href}
-      class="transition-all text-lg font-semibold text-neutral-300 bg-clip-text from-brand-200 to-blue-400 hover:text-transparent bg-gradient-to-tr"
+      class={cn(
+        `text-dark-800 dark:text-light-200 hover:text-dark-400 dark:hover:text-light-100 transition-all hover:-translate-y-1 text-lg drop-shadow-md font-medium`,
+        className,
+      )}
     >
       <slot />
     </a>
   ) : (
-    <Button>
+    <a
+      href={href}
+      class={cn(
+        "transition-all text-white font-bold rounded-xl px-4 py-2 from-brand-200 to-blue-400 bg-gradient-to-tr shadow-lg cursor-pointer bg-grad-size hover:bg-grad-pos-end",
+        className,
+      )}
+    >
       <slot />
-    </Button>
+    </a>
   )
 }
