@@ -7,6 +7,8 @@ import UserModel from "../../lib/models/User.model.ts";
 import { z } from "zod";
 import { Session } from "../../lib/Session.controller";
 
+import { FaDiscord } from "react-icons/fa";
+
 let error: string | undefined;
 
 if (Astro.request.method === "POST") {
@@ -69,8 +71,10 @@ if (Astro.request.method === "POST") {
 <script></script>
 
 <Layout title="Welcome to Astro.">
-  <div class="w-full h-full justify-center items-center flex">
-    <div class="flex flex-col gap-8 p-6 bg-neutral-800 rounded-lg shadow-lg">
+  <div slot="content" class="w-full h-full justify-center items-center flex">
+    <div
+      class="flex flex-col gap-8 p-6 bg-neutral-50 dark:bg-neutral-800 rounded-lg shadow-lg max-w-[600px]"
+    >
       <div class="flex flex-row gap-4 items-center">
         <h1 class="text-4xl font-bold">Register</h1>
         <div class="flex flex-row gap-1 place-self-end">
@@ -81,13 +85,13 @@ if (Astro.request.method === "POST") {
           >
         </div>
       </div>
-      <p class="text-lg">
+      <p class="text-lg text-neutral-500 dark:text-neutral-400">
         Astro is a new kind of static site builder that delivers lightning-fast
         performance with a modern developer experience.
       </p>
       <form class="flex flex-col gap-8" method="POST">
         <div class="flex flex-col gap-2">
-          <Input name="email" type="email" label="Username" />
+          <Input name="email" type="email" label="Email" />
           <Input name="password" type="password" label="Password" />
         </div>
         <div class="flex w-full justify-between items-center">
@@ -95,6 +99,19 @@ if (Astro.request.method === "POST") {
           <a class="text-lg text-red-400">{error}</a>
         </div>
       </form>
+      <div class="w-75 h-[1px] bg-neutral-700"></div>
+      <div class="flex flex-col gap-4">
+        <h1 class="text-3xl font-bold">Or sign up with a provider</h1>
+        <div class="flex flex-row gap-4">
+          <a
+            href="/auth/discord"
+            class="flex flex-row gap-2 shadow-lg shadow-[#5865F2]/30 text-white bg-[#5865F2] hover:bg-[#707bf4] [&>svg]:duration-300 [&>svg]:transition-all [&>svg]:hover:scale-105 [&>svg]:hover:rotate-[10deg] transition-all cursor-pointer px-4 py-2 rounded-xl font-bold items-center justify-center"
+          >
+            <FaDiscord size={24} />
+            Discord
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </Layout>

@@ -1,0 +1,49 @@
+---
+import type { IUser } from "../lib/models/User.model.ts";
+import { Session } from "../lib/Session.controller.ts";
+import type { Locals } from "../middleware";
+
+import UserDropdown from "./UserDropdown.tsx";
+
+const user = (Astro.locals as Locals).user;
+
+const sessionId = Astro.cookies.get("sid")?.value;
+if (!sessionId) return Astro.redirect("/login");
+
+const discordUser = await Session.DiscordUser(sessionId);
+---
+
+<script>
+  let open = false;
+  const button = document.getElementById("userButton");
+  const dropdown = document.getElementById("userDropdown");
+
+  const links = document.querySelectorAll("#link");
+
+  links.forEach((link: any) => {
+    const to = link.getAttribute("data-to");
+    if (!to)
+      throw new Error('div with #link ID is missing the "data-to" attribute');
+
+    link.addEventListener("click", () => {
+      location.href = to;
+    });
+  });
+
+  button?.addEventListener("click", () => {
+    if (!dropdown) return;
+    if (open) {
+      dropdown.style.display = "none";
+      open = false;
+    } else if (!open) {
+      dropdown.style.display = "block";
+      open = true;
+    }
+  });
+</script>
+
+<UserDropdown
+  discordUserString={JSON.stringify(discordUser)}
+  userString={JSON.stringify(user)}
+  client:load
+/>

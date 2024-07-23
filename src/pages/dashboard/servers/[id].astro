@@ -1,0 +1,34 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import type { IServer } from "../../../lib/models/Server.model";
+import type { Locals } from "../../../middleware";
+import { ObjectId } from "mongodb";
+
+const { id } = Astro.params;
+const servers = (Astro.locals as Locals).servers;
+const user = (Astro.locals as Locals).user;
+if (!user) return Astro.redirect("/login");
+const isGlobal = id === "global";
+let server = servers?.find((server) => server._id.toString() === id);
+if (!server && !isGlobal) return Astro.redirect("/dashboard");
+if (!server && isGlobal)
+  server = {
+    _id: new ObjectId() as any,
+    display_name: "Global",
+    address: "global",
+    port: "0",
+    plugin_port: "0",
+    plugin_api_key: "global",
+    name: "Global",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    user,
+  } as IServer;
+if (!server) return Astro.redirect("/dashboard");
+---
+
+<Layout title={`Managing ${server.display_name}`}>
+  <div slot="content">
+    <h1>Server {id}</h1>
+  </div>
+</Layout>

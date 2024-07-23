@@ -3,22 +3,40 @@ import { twMerge } from "tailwind-merge";
 import { clsx } from "clsx";
 
 interface Props {
+  href?: string;
   className?: string;
 }
 
-const { className } = Astro.props;
+const { className, href } = Astro.props;
 ---
 
-<button
-  class={twMerge(
-    clsx(
-      "button-gradient px-4 py-2 font-bold rounded-lg text-lg flex justify-center items-center w-auto cursor-pointer ",
-      className,
-    ),
-  )}
->
-  <slot />
-</button>
+{
+  href ? (
+    <a
+      href={href}
+      target="_blank"
+      class={twMerge(
+        clsx(
+          "transition-all text-foreground-light font-bold rounded-xl px-4 py-2 button-gradient shadow-lg text-white",
+          className,
+        ),
+      )}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button
+      class={twMerge(
+        clsx(
+          "transition-all text-foreground-light font-bold rounded-xl px-4 py-2 button-gradient shadow-lg text-white",
+          className,
+        ),
+      )}
+    >
+      <slot />
+    </button>
+  )
+}
 
 <style is:global>
   .button-gradient {

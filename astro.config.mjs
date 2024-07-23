@@ -7,5 +7,13 @@ import react from "@astrojs/react";
 export default defineConfig({
   output: "server",
   adapter: vercel(),
-  integrations: [tailwind(), react()],
+  security: {
+    checkOrigin: false,
+  },
+  integrations: [
+    tailwind({
+      applyBaseStyles: false,
+    }),
+    react(),
+  ],
 });
